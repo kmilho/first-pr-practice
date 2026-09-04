@@ -1,14 +1,14 @@
 # first-pr-practice
 
-A tiny calculator library used to practice opening a first pull request on GitHub.
+GitHub에서 첫 Pull Request를 연습하기 위한 아주 작은 계산기 라이브러리입니다.
 
-## Instalation
+## 설치
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## 사용법
 
 ```python
 from calculator import add, subtract
@@ -17,7 +17,7 @@ add(2, 3)       # 5
 subtract(5, 2)  # 3
 ```
 
-## Running tests
+## 테스트 실행
 
 ```bash
 python -m unittest discover
