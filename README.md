@@ -2,7 +2,7 @@
 
 A tiny calculator library used to practice opening a first pull request on GitHub.
 
-## Instalation
+## Installation
 
 ```bash
 pip install -r requirements.txt
