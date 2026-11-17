@@ -941,7 +941,7 @@ function barChart(days, vals, avg) {
 /* ===== 오늘의 게임: 기능 4 퀴즈 · 기능 5 오답 반복을 점프 게임으로 ===== */
 // 삐약이가 몬스터를 밟으면 글자 상자가 열리고, 단어에 맞는 그림을 고르면 몬스터를 물리친다. 틀리면 하트 -1
 const G = { W: 960, H: 400, GROUND: 336, HERO_X: 190, GRAV: 2300, JUMP: 980, SIZE: 60 };
-const MONSTERS = ['🐛', '🐌', '🦔', '🐞', '👾'];
+const MONSTERS = ['👾', '🛸', '👽', '☄️', '🪐'];
 let game = null;
 let gameRaf = 0;
 let gameLast = 0;
@@ -1075,28 +1075,13 @@ function stopGame() {
 const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 function drawGame(c) {
   const g = game, { W, H, GROUND } = G;
-  const sky = c.createLinearGradient(0, 0, 0, GROUND);
-  sky.addColorStop(0, '#bfe4ff');
-  sky.addColorStop(1, '#eef8ff');
-  c.fillStyle = sky;
-  c.fillRect(0, 0, W, H);
-  c.fillStyle = '#ffe07a';
-  c.beginPath(); c.arc(W - 110, 78, 38, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#ffffff';
-  [[120, 70, 1], [470, 50, .8], [760, 120, .6]].forEach(([x0, y, s], i) => {
-    const x = ((x0 - g.t * (14 + i * 6)) % (W + 200) + W + 200) % (W + 200) - 100;
-    c.beginPath(); c.ellipse(x, y, 46 * s, 22 * s, 0, 0, Math.PI * 2); c.ellipse(x + 34 * s, y + 6 * s, 34 * s, 18 * s, 0, 0, Math.PI * 2); c.ellipse(x - 32 * s, y + 8 * s, 30 * s, 15 * s, 0, 0, Math.PI * 2); c.fill();
-  });
-  c.fillStyle = '#c9efd9';
-  c.beginPath(); c.ellipse(220, GROUND + 20, 260, 110, 0, Math.PI, 0); c.fill();
-  c.fillStyle = '#b4e7cb';
-  c.beginPath(); c.ellipse(720, GROUND + 30, 320, 130, 0, Math.PI, 0); c.fill();
+  drawSpace(c, W, H, g.t, g.t * 70, ['#0a0e2a', '#1d2457'], ['#7a5cff', '#ff5c9d']);
   // 땅: 풀 + 블록 무늬 (흐르는 것처럼)
-  c.fillStyle = '#f2c07c';
+  c.fillStyle = '#232b5c';
   c.fillRect(0, GROUND, W, H - GROUND);
-  c.fillStyle = '#6fcf8a';
+  c.fillStyle = '#54e1ff';
   c.fillRect(0, GROUND, W, 14);
-  c.strokeStyle = 'rgba(160, 100, 40, .25)';
+  c.strokeStyle = 'rgba(160, 190, 255, .22)';
   c.lineWidth = 3;
   const off = g.phase === 'run' ? (g.t * 170) % 48 : 0;
   for (let x = -off; x < W; x += 48) { c.beginPath(); c.moveTo(x, GROUND + 14); c.lineTo(x, H); c.stroke(); }
@@ -1133,8 +1118,7 @@ function drawGame(c) {
   const air = h.y < GROUND;
   if (!air && g.phase === 'run') c.translate(0, Math.abs(Math.sin(g.t * 10)) * -4);
   if (air) c.rotate(-.12);
-  c.font = '68px ' + EMOJI_FONT;
-  c.fillText('🐥', 0, 0);
+  drawRobot(c, 0, 0, g.t, air, g.phase === 'run');
   c.restore();
   c.fillStyle = 'rgba(45, 50, 80, .12)';
   c.beginPath(); c.ellipse(G.HERO_X, GROUND + 6, 26 - (GROUND - h.y) / 12, 6, 0, 0, Math.PI * 2); c.fill();
@@ -1157,7 +1141,7 @@ function renderGameUI() {
     <span class="g-pill">⭐ ${g.score}</span><span class="g-pill">문제 ${Math.min(g.qi + 1, GAME_ROUND)} / ${GAME_ROUND}</span><span class="g-pill">${L.name}</span>`;
   let html = '';
   if (g.phase === 'ready') html = `<div class="g-card">
-      <div class="g-big">🐥</div><h3>삐약이의 글자 모험</h3>
+      <div class="g-big">🐥</div><h3>우주 로봇의 글자 모험</h3>
       <ol class="g-how"><li>⬆️ 점프해서 몬스터를 <b>위에서 밟아요</b></li><li>📦 글자 상자의 단어를 <b>읽고</b> 맞는 그림을 골라요</li><li>❤️ 틀리면 하트가 하나 줄어요 (하트 ${GAME_HEARTS}개)</li></ol>
       <button class="btn big go" data-act="gameStart">시작하기 ▶</button>
       <p class="g-tip">스페이스바나 화면을 눌러도 점프해요</p></div>`;
@@ -1655,7 +1639,7 @@ function makeBlank() {
   return {
     app: APP_ID, version: 2, savedAt: '',
     learner: { name: '대윤이', age: 6, startDate: today() },
-    items: {}, history: [], custom: { 4: [], 5: [] }, quiz: {}, games: [], books: {}, adv: { stars: {} },
+    items: {}, history: [], custom: { 4: [], 5: [] }, quiz: {}, games: [], books: {}, adv: { stars: {}, level: 0 },
     ui: { view: 'home', stage: 4, filter: {}, sort: 'no', homeFilter: 'all', gameLevel: 'easy' }
   };
 }
@@ -1751,12 +1735,21 @@ function bookDone() {
 /* ---------- 🗺️ 징검다리 모험: 가로로 달리는 읽기 플랫폼 게임 (Rev.1 점프 게임과 별도) ---------- */
 // 📦 블록을 머리로 치면 소리 듣고 단어 고르기 · 🌊 끊어진 다리는 빠진 글자 고르기 · 🐰 갇힌 친구는 단어 카드로 문장 만들기
 const ADV_COURSES = [
-  { key: 'c1', name: '숲속 징검다리', icon: '🌳', sky: ['#bfe8ff', '#eaf8ff'], ground: '#8fdc72', deco: ['🌲', '🌳', '🍄', '🌼'], pool: 'easy', sent: [2, 3], friend: '🐰', desc: '받침 없는 단어 · 짧은 문장' },
-  { key: 'c2', name: '바닷가 징검다리', icon: '🏖️', sky: ['#ffe6c7', '#fff6e8'], ground: '#f3d9a0', deco: ['🌴', '🐚', '⛵', '🦀'], pool: 'normal', sent: [3, 3], friend: '🐻', desc: '받침 있는 단어 · 세 단어 문장' },
-  { key: 'c3', name: '하늘 징검다리', icon: '☁️', sky: ['#d9ccff', '#f1ebff'], ground: '#e4defc', deco: ['🌈', '⭐', '🎈', '🪁'], pool: 'normal', sent: [4, 9], friend: '🦊', desc: '받침 있는 단어 · 긴 문장' }
+  { key: 'c1', name: '달 징검다리', icon: '🌙', sky: ['#0a0e2a', '#1d2457'], neb: ['#7a5cff', '#ff5c9d'], lv: 1, boss: '👾', desc: '가장 쉬운 코스' },
+  { key: 'c2', name: '화성 징검다리', icon: '🪐', sky: ['#2a0d1f', '#5a2236'], neb: ['#ff7a45', '#ffb347'], lv: 2, boss: '🐙', desc: '장애물이 늘어나요' },
+  { key: 'c3', name: '은하 징검다리', icon: '🌌', sky: ['#04122b', '#0b3a5c'], neb: ['#22d3ee', '#6ee7b7'], lv: 3, boss: '🛸', desc: '빠르고 헷갈리는 보기' }
 ];
-const ADV_PLAN = ['coin', 'block', 'coin', 'bridge', 'block', 'coin', 'block', 'bridge', 'coin', 'friend', 'flag'];
-const ADV_HEARTS = 3;
+const ADV_LEVELS = [{ k: 0, icon: '🌱', name: '쉬움' }, { k: 1, icon: '🌿', name: '보통' }, { k: 2, icon: '🔥', name: '어려움' }];
+// 코스 난이도(1~3) + 고른 난이도(0~2) = 단계 e(0~4). e가 클수록 장애물이 많고 간격이 좁고 보기가 많다
+const ADV_PLANS = [
+  ['coin', 'block', 'coin', 'rock', 'block', 'coin', 'bridge', 'block', 'coin', 'boss', 'flag'],
+  ['coin', 'block', 'coin', 'rock', 'bridge', 'block', 'coin', 'rock', 'bridge', 'coin', 'block', 'coin', 'boss', 'flag'],
+  ['coin', 'block', 'rock', 'bridge', 'coin', 'block', 'rock', 'bridge', 'coin', 'block', 'rock', 'bridge', 'coin', 'boss', 'flag'],
+  ['coin', 'block', 'rock', 'bridge', 'rock', 'block', 'coin', 'rock', 'bridge', 'rock', 'block', 'coin', 'bridge', 'rock', 'coin', 'boss', 'flag'],
+  ['coin', 'block', 'rock', 'bridge', 'rock', 'block', 'rock', 'bridge', 'rock', 'block', 'bridge', 'rock', 'bridge', 'coin', 'boss', 'flag']
+];
+const SENT_RANGE = [[2, 3], [3, 4], [3, 5], [4, 6], [4, 9]];
+const ADV_HEARTS = 3, MISSILE_COST = 2;
 let adv = null, advRaf = 0, advLast = 0, advCourse = 'c1';
 
 function normAdv(a) {
@@ -1765,7 +1758,8 @@ function normAdv(a) {
     const n = Math.floor(Number(a && a.stars && a.stars[c.key]));
     if (n >= 1 && n <= 3) stars[c.key] = n;
   });
-  return { stars };
+  const lv = Math.floor(Number(a && a.level));
+  return { stars, level: lv >= 0 && lv <= 2 ? lv : 0 };
 }
 
 const advUnlocked = k => {
@@ -1773,40 +1767,76 @@ const advUnlocked = k => {
   return i === 0 || (state.adv.stars[ADV_COURSES[i - 1].key] || 0) >= 1;
 };
 
+// 한글 글자의 초성·중성 번호 (비슷한 글자를 보기로 섞어 어렵게 만들 때 쓴다)
+const syl = ch => { const n = ch.charCodeAt(0) - 0xAC00; return n >= 0 && n < 11172 ? [Math.floor(n / 588), Math.floor(n % 588 / 28)] : [-1, -1]; };
+const likeness = (a, b) => { const x = syl(a[0]), y = syl(b[0]); return (x[0] === y[0] ? 2 : 0) + (x[1] === y[1] ? 1 : 0) + (a.length === b.length ? 1 : 0); };
+
 // 한 코스의 문제를 미리 만든다 (약한 단어가 먼저 나온다: Rev.1의 오답 반복 로직 재사용)
 function newAdv(key) {
   const c = ADV_COURSES.find(k => k.key === key);
-  const pool = levelPool(c.pool);
-  const ranked = pickQuestions(c.pool, Math.min(pool.length, 14)).map(q => q.it);
+  const e = c.lv - 1 + state.adv.level;
+  const pk = e <= 1 ? 'easy' : 'normal';
+  const pool = levelPool(pk);
+  const plan = ADV_PLANS[e];
+  const nch = e >= 3 ? 4 : 3;                          // 보기 개수
+  const ranked = pickQuestions(pk, Math.min(pool.length, 26)).map(q => q.it);
   const blockIts = ranked.slice(0, 3);
-  const bridgeIts = ranked.filter(it => [...it.text].length >= 2 && !blockIts.includes(it)).slice(0, 2);
-  const syl = shuffle([...new Set(pool.flatMap(it => [...it.text]))]);
+  const bridgeIts = ranked.filter(it => [...it.text].length >= 2 && !blockIts.includes(it));
+  const sylAll = [...new Set(pool.flatMap(it => [...it.text]))];
+  // 쉬운 단계는 아무 보기나, 어려운 단계는 모양이 비슷한 보기를 섞는다
+  const pickOthers = (arr, me, n) => (e >= 2
+    ? arr.slice().sort((a, b) => likeness(b, me) - likeness(a, me) + (Math.random() - .5) * 1.6)
+    : shuffle(arr)).slice(0, n);
+  // 보스: 맞혀야 하는 횟수 + 틀려도 다시 낼 여분 문제 (문장 읽기 3종류가 돌아가며 나온다)
+  const need = e >= 3 ? 4 : 3;
+  const [lo, hi] = SENT_RANGE[e];
+  const allSent = levelPool('hard');
+  let sp = allSent.filter(it => { const n = it.text.split(' ').length; return n >= lo && n <= hi; });
+  if (sp.length < need + 3) sp = allSent;
   const rk = { weak: 0, learning: 1, new: 2, mastered: 3 };
-  let sp = levelPool('hard').filter(it => { const n = it.text.split(' ').length; return n >= c.sent[0] && n <= c.sent[1]; });
-  if (!sp.length) sp = levelPool('hard');
-  const sit = shuffle(sp).sort((a, b) => rk[mastery(a.id)] - rk[mastery(b.id)])[0];
-  const words = sit.text.split(' ');
-  let chips = shuffle(words.map(w => ({ w, used: false })));
-  if (words.length > 1 && chips.every((ch, i) => ch.w === words[i])) chips = chips.reverse();
+  const picked = shuffle(sp).sort((a, b) => rk[mastery(a.id)] - rk[mastery(b.id)]).slice(0, need + 3);
+  const kinds = ['order', 'cloze', 'hear', 'order'];
+  const wordsBank = [...new Set(allSent.flatMap(it => it.text.split(' ').map(plain)))].filter(w => w.length >= 2);
+  const rounds = picked.map((it, i) => {
+    const words = it.text.split(' '), kind = kinds[i % kinds.length];
+    if (kind === 'order') {
+      let chips = shuffle(words.map(w => ({ w, used: false })));
+      if (words.length > 1 && chips.every((ch, k) => ch.w === words[k])) chips = chips.reverse();
+      return { kind, it, words, chips, next: 0, pen: false };
+    }
+    if (kind === 'cloze') {
+      const cand = words.map((w, k) => k).filter(k => plain(words[k]).length >= 2);
+      const idx = cand[Math.floor(Math.random() * cand.length)], ans = plain(words[idx]);
+      const tail = words[idx].slice(ans.length);
+      const others = pickOthers(wordsBank.filter(w => w !== ans && !words.map(plain).includes(w)), ans, nch - 1);
+      return { kind, it, words, idx, ans, tail, choices: shuffle([ans].concat(others)) };
+    }
+    const others = shuffle(allSent.filter(o => o.text !== it.text && Math.abs(o.text.split(' ').length - words.length) <= 1)).slice(0, nch - 1).map(o => o.text);
+    return { kind, it, choices: shuffle([it.text].concat(others)) };
+  });
   let bi = 0, ki = 0, x = 700;
-  const objs = ADV_PLAN.map(t => {
+  const spacing = 520 - e * 28;
+  const objs = plan.map(t => {
     const o = { type: t, x, done: false };
     if (t === 'block') {
       const it = blockIts[bi++];
-      o.q = { it, choices: shuffle([it.text].concat(shuffle(pool.filter(p => p.text !== it.text)).slice(0, 2).map(p => p.text))) };
+      o.q = { it, choices: shuffle([it.text].concat(pickOthers(pool.map(p => p.text).filter(w => w !== it.text), it.text, nch - 1))) };
     }
     if (t === 'bridge') {
-      const it = bridgeIts[ki++] || blockIts[0];
+      const it = bridgeIts[ki++ % bridgeIts.length];
       const chars = [...it.text], idx = Math.floor(Math.random() * chars.length), ch = chars[idx];
-      o.q = { it, chars, idx, ch, choices: shuffle([ch].concat(syl.filter(s => s !== ch).slice(0, 2))) };
+      o.q = { it, chars, idx, ch, choices: shuffle([ch].concat(pickOthers(sylAll.filter(s => s !== ch), ch, nch - 1))) };
     }
-    if (t === 'friend') o.q = { it: sit, words, chips, next: 0, pen: false };
-    x += t === 'coin' ? 340 : 520;
+    if (t === 'boss') o.q = { rounds, r: 0, hp: need, max: need };
+    if (t === 'coin') o.got = [false, false, false];
+    x += t === 'coin' ? 340 : spacing;
     return o;
   });
-  return { c, objs, total: objs.filter(o => o.q).length, sx: 0, hero: { y: G.GROUND, vy: 0 }, hearts: ADV_HEARTS, coins: 0, wrong: 0,
-    phase: 'ready', t: 0, fx: [], cur: null, fb: null, waiting: false, tk: 0, stars: 0 };
+  return { c, e, speed: 190 + e * 26, gapHalf: 50 + e * 4, rockHalf: 26 + e * 3, len: x, objs, sx: 0, hero: { y: G.GROUND, vy: 0 }, hearts: ADV_HEARTS, coins: 0, wrong: 0,
+    blockOk: 0, missiles: [], cd: 0, hint: false, shake: 0, hurt: 0, phase: 'ready', t: 0, fx: [], cur: null, fb: null, tk: 0, stars: 0, hudKey: '' };
 }
+
+const advIt = o => o.type === 'boss' ? o.q.rounds[o.q.r % o.q.rounds.length].it : o.q.it;
 
 function renderAdv() {
   if (!advUnlocked(advCourse)) advCourse = ADV_COURSES[0].key;
@@ -1816,10 +1846,12 @@ function renderAdv() {
         const s = state.adv.stars[c.key] || 0, lock = !advUnlocked(c.key);
         return `<button class="${c.key === advCourse ? 'on' : ''}" data-act="r2Course" data-k="${c.key}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : c.icon} ${esc(c.name)} ${'⭐'.repeat(s)}</button>`;
       }).join('')}</div></div>
+    <div class="adv-lv-row"><span class="panel-note">난이도</span><div class="seg">${ADV_LEVELS.map(l => `<button class="${l.k === state.adv.level ? 'on' : ''}" data-act="r2Level" data-k="${l.k}">${l.icon} ${l.name}</button>`).join('')}</div></div>
     <div class="game-stage"><canvas id="advCanvas" width="${G.W}" height="${G.H}" aria-label="징검다리 모험 화면. 점프 버튼이나 스페이스바로 점프해요"></canvas>
       <div class="g-hud" id="advHud"></div></div>
     <div class="game-controls"><button class="btn big jump" data-act="r2Jump">⬆️ 점프!</button>
-      <span class="panel-note">📦 블록 아래에서 점프하면 머리로 쳐요 · 스페이스바나 화면을 눌러도 점프해요</span></div>
+      <button class="btn big fire" id="advFire" data-act="r2Fire" disabled>🚀 미사일 <small>🪙${MISSILE_COST}</small></button>
+      <span class="panel-note">스페이스바 · 화면 누르기 = 점프 / X 키 = 미사일</span></div>
     <div class="adv-panel" id="advPanel"></div></section>`;
 }
 
@@ -1839,6 +1871,7 @@ function advLoop(ts) {
   const dt = Math.min(0.05, (ts - advLast) / 1000);
   advLast = ts;
   updateAdv(dt);
+  advSync();
   drawAdv(cv.getContext('2d'));
   advRaf = requestAnimationFrame(advLoop);
 }
@@ -1850,31 +1883,95 @@ function burst(a, x, y, s, n) {
 function updateAdv(dt) {
   const a = adv, h = a.hero;
   a.t += dt;
+  a.cd = Math.max(0, a.cd - dt);
+  a.shake = Math.max(0, a.shake - dt);
+  a.hurt = Math.max(0, a.hurt - dt);
   a.fx = a.fx.filter(p => (p.life -= dt) > 0);
   a.fx.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * dt; });
   h.vy += G.GRAV * dt;
   h.y += h.vy * dt;
   if (h.y >= G.GROUND) { h.y = G.GROUND; h.vy = 0; }
-  a.waiting = false;
+  a.hint = false;
   if (a.phase !== 'run') return;
-  const o = a.objs.find(k => !k.done);
-  const px = o ? o.x - a.sx : 1e9;
-  if (o && o.type === 'block' && px <= G.HERO_X + 55) {
-    if (h.y <= G.GROUND - 90) return hitBlock(o);      // 점프해서 머리로 쳤다
-    if (px <= G.HERO_X + 20) { a.waiting = true; return; } // 블록 아래에서 점프를 기다린다
+  // 미사일: 블록을 맞히면 문제가 나오고, 운석은 부서진다
+  a.missiles = a.missiles.filter(m => {
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    for (const o of a.objs) {
+      const px = o.x - a.sx, ty = o.type === 'block' ? G.GROUND - 175 : G.GROUND - 28;
+      if (o.done || o.gone || !(o.type === 'rock' || o.type === 'block' && !o.hit)) continue;
+      if (Math.abs(m.x - px) < 42 && Math.abs(m.y - ty) < 48) {
+        burst(a, px, ty, '💥', 6);
+        if (o.type === 'rock') { o.gone = o.done = true; burst(a, px, ty, '✨', 8); } else hitBlock(o, true);
+        return false;
+      }
+    }
+    return m.x < G.W + 40 && m.y > -40;
+  });
+  if (a.phase !== 'run') return;
+  const speed = a.speed * (1 + .14 * Math.min(1, a.sx / a.len));   // 코스 안에서도 갈수록 조금씩 빨라진다
+  for (const o of a.objs) {
+    if (o.done) continue;
+    const px = o.x - a.sx, dx = px - G.HERO_X;
+    if (o.type === 'coin') {   // 길의 코인은 하나에 1개
+      [-44, 0, 44].forEach((d, i) => {
+        if (!o.got[i] && Math.abs(dx + d) < 30 && h.y > G.GROUND - 140) { o.got[i] = true; a.coins++; burst(a, G.HERO_X, h.y - 50, '🪙', 2); }
+      });
+      if (o.got.every(Boolean) || dx < -120) o.done = true;
+    }
+    if (o.type === 'block') {   // 머리로 쳐야 문제가 나온다. 지나치면 그냥 넘어간다
+      if (!o.hit && Math.abs(dx) < 55 && h.y <= G.GROUND - 62) { hitBlock(o, false); return; }
+      if (dx < -90) o.done = true; else if (dx > 40 && dx < 260 && !o.hit) a.hint = true;
+    }
+    if (o.type === 'rock') {   // 점프로 피하거나 미사일로 부순다. 못 피하면 하트가 깎인다
+      if (Math.abs(dx) < a.rockHalf && h.y > G.GROUND - 40) {
+        o.gone = o.done = true;
+        a.hearts--; a.wrong++; a.hurt = .8;
+        burst(a, px, G.GROUND - 30, '💥', 8);
+        toast('☄️ 쿵! 운석에 부딪혀서 하트가 줄었어요 ❤️ -1');
+        if (a.hearts <= 0) return endAdv(false);
+      } else if (dx < -90) o.done = true; else if (dx > 40 && dx < 240) a.hint = true;
+    }
+    if (o.type === 'bridge') {   // 우주 틈: 점프로 건너면 문제 없음, 빠지면 구조 문제
+      if (h.y >= G.GROUND && Math.abs(dx) < a.gapHalf - 18) { askAdv(o); return; }
+      if (dx < -(a.gapHalf + 40)) o.done = true; else if (dx > 40 && dx < 260) a.hint = true;
+    }
+    if (o.type === 'boss' && dx <= 360) { askAdv(o); return; }
+    if (o.type === 'flag' && dx <= 10) return endAdv(true);
   }
-  if (o && o.type === 'bridge' && px - 75 <= G.HERO_X + 40) return askAdv(o);
-  if (o && o.type === 'friend' && px <= G.HERO_X + 150) return askAdv(o);
-  if (o && o.type === 'flag' && px <= G.HERO_X + 10) return endAdv(true);
-  if (o && o.type === 'coin' && px <= G.HERO_X + 40) { o.done = true; a.coins += 3; burst(a, G.HERO_X, G.GROUND - 80, '🪙', 6); }
-  a.sx += 220 * dt;
+  a.sx += speed * dt;
 }
 
 function advJump() {
   if (adv && adv.phase === 'run' && adv.hero.y >= G.GROUND) adv.hero.vy = -G.JUMP;
 }
-function hitBlock(o) {
-  adv.hero.vy = 260;
+
+// 🚀 가슴에서 발사. 앞쪽에서 가장 가까운 블록·운석을 알아서 조준한다 (아이가 겨냥하지 않아도 된다)
+function advFire() {
+  const a = adv;
+  if (!a || a.phase !== 'run' || a.cd > 0) return;
+  if (a.coins < MISSILE_COST) { toast('🪙 코인 ' + MISSILE_COST + '개가 있어야 쏠 수 있어요'); return; }
+  a.coins -= MISSILE_COST; a.cd = .45;
+  const x0 = G.HERO_X + 30, y0 = a.hero.y - 52, V = 760;
+  let best = null;
+  a.objs.forEach(o => {
+    if (o.done || o.gone || !(o.type === 'rock' || o.type === 'block' && !o.hit)) return;
+    const dx = o.x - a.sx - x0;
+    if (dx > 20 && dx < 640 && (!best || dx < best.dx)) best = { o, dx };
+  });
+  let vx = V, vy = 0;
+  if (best) {
+    const ty = best.o.type === 'block' ? G.GROUND - 175 : G.GROUND - 28;
+    const tx = Math.max(30, best.dx - a.speed * Math.hypot(best.dx, ty - y0) / V);   // 다가오는 표적을 앞서 맞힌다
+    const L = Math.hypot(tx, ty - y0);
+    vx = V * tx / L; vy = V * (ty - y0) / L;
+  }
+  a.missiles.push({ x: x0, y: y0, vx, vy });
+  burst(a, x0, y0, '💨', 3);
+  advHud();
+}
+
+function hitBlock(o, byMissile) {
+  if (!byMissile) adv.hero.vy = 260;
   o.hit = true;
   askAdv(o);
   speak(o.q.it);
@@ -1883,44 +1980,61 @@ function askAdv(o) {
   adv.cur = o;
   adv.phase = 'ask';
   renderAdvUI();
+  if (o.type === 'boss') { const rd = o.q.rounds[o.q.r % o.q.rounds.length]; if (rd.kind === 'hear') speak(rd.it); }
 }
 
 function advAnswer(i) {
   const a = adv;
-  if (!a || a.phase !== 'ask' || !a.cur || a.cur.type === 'friend') return;
-  const q = a.cur.q;
-  const ok = (a.cur.type === 'block' ? q.choices[i] === q.it.text : q.choices[i] === q.ch);
-  recordQuiz(q.it.id, ok);
-  finishAdv(ok, false);
+  if (!a || a.phase !== 'ask' || !a.cur) return;
+  const o = a.cur, q = o.q;
+  let ok, it;
+  if (o.type === 'block') { ok = q.choices[i] === q.it.text; it = q.it; }
+  else if (o.type === 'bridge') { ok = q.choices[i] === q.ch; it = q.it; }
+  else {
+    const rd = q.rounds[q.r % q.rounds.length];
+    if (rd.kind === 'order') return;
+    ok = rd.kind === 'cloze' ? rd.choices[i] === rd.ans : rd.choices[i] === rd.it.text; it = rd.it;
+  }
+  recordQuiz(it.id, ok);
+  finishAdv(ok, false, it);
 }
 
 function advChip(i) {
   const a = adv;
-  if (!a || a.phase !== 'ask' || !a.cur || a.cur.type !== 'friend') return;
-  const q = a.cur.q, chip = q.chips[i];
-  if (chip.used) return;
-  if (chip.w === q.words[q.next]) {
+  if (!a || a.phase !== 'ask' || !a.cur || a.cur.type !== 'boss') return;
+  const rd = a.cur.q.rounds[a.cur.q.r % a.cur.q.rounds.length];
+  if (rd.kind !== 'order') return;
+  const chip = rd.chips[i];
+  if (!chip || chip.used) return;
+  if (chip.w === rd.words[rd.next]) {
     chip.used = true;
-    q.next++;
-    if (q.next === q.words.length) { recordQuiz(q.it.id, !q.pen); finishAdv(!q.pen, true); }
+    rd.next++;
+    if (rd.next === rd.words.length) { recordQuiz(rd.it.id, !rd.pen); finishAdv(!rd.pen, true, rd.it); }
     else { speak({ stage: 4, text: plain(chip.w) }); renderAdvUI(); }
   } else {
-    if (!q.pen) { q.pen = true; a.hearts--; a.wrong++; }  // 문장 하나에 하트는 한 번만 깎는다
+    if (!rd.pen) { rd.pen = true; a.hearts--; a.wrong++; }  // 한 문제에 하트는 한 번만 깎는다
     renderAdvUI();
     toast('앗! 다시 생각해 봐요 🤔');
   }
 }
 
-function finishAdv(ok, paid) {
-  const a = adv, o = a.cur;
-  if (ok) { a.coins += 5; burst(a, G.HERO_X + 40, G.GROUND - 100, '⭐', 14); }
-  else if (!paid) { a.hearts--; a.wrong++; }
-  o.done = true;
-  if (o.type === 'bridge') o.built = true;     // 틀려도 다리는 놓인다 (정답은 알려 주고 이 단어는 다음에 또 나온다)
-  if (o.type === 'friend') o.freed = true;
-  a.fb = { ok, o };
+function finishAdv(ok, paid, it) {
+  const a = adv, o = a.cur, q = o.q;
+  if (ok) {
+    if (o.type === 'bridge') burst(a, G.HERO_X, G.GROUND - 60, '⭐', 12);        // 구조 성공: 하트는 그대로
+    else { a.coins += 5; burst(a, G.HERO_X + 40, G.GROUND - 100, '🪙', 10); }    // 문제를 맞히면 코인 5개
+    if (o.type === 'block') a.blockOk++;
+    if (o.type === 'boss') { q.hp--; a.shake = .6; burst(a, G.HERO_X + 330, G.GROUND - 120, '💥', 10); }
+  } else {
+    if (!paid) { a.hearts--; a.wrong++; }
+    if (o.type === 'boss') burst(a, G.HERO_X + 120, G.GROUND - 100, '💢', 6);
+  }
+  if (o.type === 'boss') q.r++; else o.done = true;
+  if (o.type === 'boss' && q.hp <= 0) { o.done = true; o.defeated = true; burst(a, G.HERO_X + 330, G.GROUND - 100, '🎉', 14); }
+  if (o.type === 'bridge') a.sx = o.x - G.HERO_X + a.gapHalf + 45;   // 구조되면 틈을 지난 자리에 다시 선다 (맞든 틀리든)
+  a.fb = { ok, o, it };
   a.phase = 'result';
-  speak(o.q.it);
+  speak(it);
   renderAdvUI();
   const tk = ++a.tk;
   setTimeout(() => {
@@ -1934,43 +2048,70 @@ function finishAdv(ok, paid) {
 function endAdv(clear) {
   const a = adv;
   a.phase = clear ? 'clear' : 'over';
-  a.stars = clear ? (a.wrong === 0 ? 3 : a.wrong === 1 ? 2 : 1) : 0;
+  a.stars = clear ? (a.wrong === 0 && a.blockOk >= 3 ? 3 : a.blockOk >= 2 && a.wrong <= 1 ? 2 : 1) : 0;
   if (clear && a.stars > (state.adv.stars[a.c.key] || 0)) { state.adv.stars[a.c.key] = a.stars; saveState(); }
   renderAdvUI();
   if (clear) { burst(a, G.HERO_X, G.GROUND - 100, '🎉', 12); speak({ stage: 5, text: '참 잘했어요!' }); }
 }
 
-function renderAdvUI() {
-  const a = adv, hud = $('advHud'), box = $('advPanel');
-  if (!a || !hud || !box) return;
-  const done = a.objs.filter(o => o.q && o.done).length;
+const advKey = a => [a.coins, a.hearts, a.objs.filter(o => o.type === 'block' && o.hit).length, a.phase].join(':');
+function advHud() {
+  const a = adv, hud = $('advHud');
+  if (!a || !hud) return;
+  const hit = a.objs.filter(o => o.type === 'block' && o.hit).length;
   hud.innerHTML = `<span class="g-hearts" aria-label="하트 ${a.hearts}개">${'❤️'.repeat(Math.max(0, a.hearts))}${'🤍'.repeat(ADV_HEARTS - Math.max(0, a.hearts))}</span>
-    <span class="g-pill">🪙 ${a.coins}</span><span class="g-pill">${done} / ${a.total}</span><span class="g-pill">${a.c.icon} ${esc(a.c.name)}</span>`;
+    <span class="g-pill">🪙 ${a.coins}</span><span class="g-pill">📦 ${hit} / 3</span><span class="g-pill">${a.c.icon} ${esc(a.c.name)}</span>`;
+  const f = $('advFire');
+  if (f) f.disabled = a.phase !== 'run' || a.coins < MISSILE_COST;
+  a.hudKey = advKey(a);
+}
+function advSync() { if (adv && adv.hudKey !== advKey(adv)) advHud(); }
+
+function renderAdvUI() {
+  const a = adv, box = $('advPanel');
+  if (!a || !box) return;
+  advHud();
   const cur = a.cur, q = cur && cur.q;
+  const lvName = ADV_LEVELS[state.adv.level].icon + ' ' + ADV_LEVELS[state.adv.level].name;
+  const bossBar = () => `<p class="boss-bar">${a.c.boss} 보스 에너지 <b>${'💚'.repeat(q.hp)}${'🖤'.repeat(q.max - q.hp)}</b></p>`;
   let html = '';
-  if (a.phase === 'ready') html = `<div class="adv-card"><h3>${a.c.icon} ${esc(a.c.name)}</h3><p class="panel-note">${esc(a.c.desc)}</p>
-    <ol class="g-how"><li>📦 블록 아래에서 <b>점프</b>해서 머리로 쳐요 → <b>소리</b>를 듣고 알맞은 <b>단어</b>를 골라요</li>
-    <li>🌊 끊어진 다리 → <b>빠진 글자</b>를 찾아 다리를 놓아요</li>
-    <li>${a.c.friend} 갇힌 친구 → <b>단어 카드</b>를 순서대로 눌러 <b>문장</b>을 읽으면 구해 줘요</li>
-    <li>❤️ 하트 ${ADV_HEARTS}개 · 별 3개를 모아 보세요</li></ol>
+  if (a.phase === 'ready') html = `<div class="adv-card"><h3>${a.c.icon} ${esc(a.c.name)}</h3><p class="panel-note">${esc(a.c.desc)} · 난이도 ${lvName} · 단계 ${a.e + 1} / 5</p>
+    <ol class="g-how"><li>📦 블록을 <b>점프로 머리 치기</b>나 <b>🚀 미사일</b>로 맞히면 소리를 듣고 단어 고르기 → 맞히면 <b>🪙 5개!</b> (길의 코인은 1개씩)</li>
+    <li>🌌 우주 틈은 <b>점프로 건너요</b>. 빠지면 빠진 글자를 맞혀서 구조! 맞히면 하트 그대로, 틀리면 ❤️ -1</li>
+    <li>☄️ 운석은 점프로 피하거나 미사일로 부숴요. <b>못 피하면 ❤️ -1</b></li>
+    <li>🚀 미사일은 <b>가슴에서 발사</b>해요. 코인 ${MISSILE_COST}개가 들어요</li>
+    <li>${a.c.boss} 마지막은 <b>보스전</b>! 문장 읽기 문제를 <b>${cur ? q.max : (a.objs.find(o => o.type === 'boss').q.max)}번</b> 맞히면 보스를 이겨요</li></ol>
     <button class="btn big go" data-act="r2Start">출발! ▶</button></div>`;
-  if (a.phase === 'ask' && cur.type === 'block') html = `<div class="adv-card"><p class="g-tag">📦 소리를 듣고 읽어요</p>
+  if (a.phase === 'ask' && cur.type === 'block') html = `<div class="adv-card"><p class="g-tag">📦 소리를 듣고 읽어요 · 맞히면 🪙 5개</p>
     <button class="btn" data-act="r2Replay">🔊 다시 듣기</button>
     <div class="r2-choices">${q.choices.map((w, i) => `<button class="r2-choice" data-act="r2Ans" data-i="${i}">${esc(w)}<small>${i + 1}</small></button>`).join('')}</div></div>`;
-  if (a.phase === 'ask' && cur.type === 'bridge') html = `<div class="adv-card"><p class="g-tag">🌊 빠진 글자를 찾아 다리를 놓아요</p>
+  if (a.phase === 'ask' && cur.type === 'bridge') html = `<div class="adv-card"><p class="g-tag">🌌 우주 틈에 빠졌어요! 빠진 글자를 맞히면 구조돼요</p>
     <div class="g-big">${q.it.example[1]}</div>
     <div class="r2-word">${q.chars.map((c, i) => i === q.idx ? '<span class="blank">?</span>' : esc(c)).join('')}</div>
     <button class="btn" data-act="r2Replay">🔊 소리 듣기</button>
     <div class="r2-choices">${q.choices.map((c, i) => `<button class="r2-choice" data-act="r2Ans" data-i="${i}">${esc(c)}<small>${i + 1}</small></button>`).join('')}</div></div>`;
-  if (a.phase === 'ask' && cur.type === 'friend') html = `<div class="adv-card"><p class="g-tag">${a.c.friend} 단어 카드를 순서대로 눌러 문장을 읽어요</p>
-    <div class="g-big">${q.it.example[1]}</div>
-    <div class="r2-built">${q.words.slice(0, q.next).map(w => `<span class="r2-slot on">${esc(w)}</span>`).join('')}${q.next < q.words.length ? '<span class="r2-slot">?</span>' : ''}</div>
-    <div class="r2-choices">${q.chips.map((ch, i) => `<button class="r2-chip" data-act="r2Chip" data-i="${i}" ${ch.used ? 'disabled' : ''}>${esc(ch.w)}</button>`).join('')}</div></div>`;
+  if (a.phase === 'ask' && cur.type === 'boss') {
+    const rd = q.rounds[q.r % q.rounds.length];
+    let body = '';
+    if (rd.kind === 'order') body = `<p class="g-tag">✍️ 문장 만들기 · 단어 카드를 순서대로 눌러요</p><div class="g-big">${rd.it.example[1]}</div>
+      <div class="r2-built">${rd.words.slice(0, rd.next).map(w => `<span class="r2-slot on">${esc(w)}</span>`).join('')}${rd.next < rd.words.length ? '<span class="r2-slot">?</span>' : ''}</div>
+      <div class="r2-choices">${rd.chips.map((ch, i) => `<button class="r2-chip" data-act="r2Chip" data-i="${i}" ${ch.used ? 'disabled' : ''}>${esc(ch.w)}</button>`).join('')}</div>`;
+    if (rd.kind === 'cloze') body = `<p class="g-tag">🧩 빈칸 채우기 · 빠진 단어를 골라요</p><div class="g-big">${rd.it.example[1]}</div>
+      <div class="r2-sent">${rd.words.map((w, i) => i === rd.idx ? '<span class="blank">　　</span>' + esc(rd.tail) : esc(w)).join(' ')}</div>
+      <div class="r2-choices">${rd.choices.map((w, i) => `<button class="r2-choice" data-act="r2Ans" data-i="${i}">${esc(w)}<small>${i + 1}</small></button>`).join('')}</div>`;
+    if (rd.kind === 'hear') body = `<p class="g-tag">👂 듣고 고르기 · 들은 문장을 찾아요</p><div class="g-big">${rd.it.example[1]}</div>
+      <button class="btn" data-act="r2Replay">🔊 다시 듣기</button>
+      <div class="r2-choices">${rd.choices.map((w, i) => `<button class="r2-choice long" data-act="r2Ans" data-i="${i}">${esc(w)}<small>${i + 1}</small></button>`).join('')}</div>`;
+    html = `<div class="adv-card">${bossBar()}${body}</div>`;
+  }
   if (a.phase === 'result') {
-    const f = a.fb;
+    const f = a.fb, boss = f.o.type === 'boss', rescue = f.o.type === 'bridge';
+    const title = f.ok ? (boss ? (f.o.defeated ? '보스를 이겼어요! 🎉' : '명중! 보스 에너지 -1 🚀') : rescue ? '구조 성공! 하트는 그대로예요 ❤️' : '정답이에요! 🪙 +5')
+      : (boss ? '앗! 보스의 반격! ❤️ -1' : rescue ? '구조는 됐지만 하트가 하나 줄었어요' : '앗, 아쉬워요!');
     html = `<div class="adv-card ${f.ok ? 'ok' : 'ng'}"><div class="g-big">${f.ok ? '🎉' : '💔'}</div>
-      <h3>${f.ok ? '정답이에요!' : '앗, 아쉬워요!'}</h3>
-      <p class="g-answer"><span>${f.o.q.it.example[1]}</span><b>${esc(f.o.q.it.text)}</b></p>
+      <h3>${title}</h3>
+      <p class="g-answer"><span>${f.it.example[1]}</span><b>${esc(f.it.text)}</b></p>
+      ${boss ? `<p class="boss-bar">${a.c.boss} 보스 에너지 <b>${'💚'.repeat(f.o.q.hp)}${'🖤'.repeat(f.o.q.max - f.o.q.hp)}</b></p>` : ''}
       ${f.ok ? '' : '<p class="g-tip">이 글은 다음에 다시 나와요 🔁</p>'}</div>`;
   }
   if (a.phase === 'clear' || a.phase === 'over') {
@@ -1978,65 +2119,73 @@ function renderAdvUI() {
     html = `<div class="adv-card"><div class="g-big">${a.phase === 'clear' ? '🏆' : '😢'}</div>
       <h3>${a.phase === 'clear' ? '코스 완주!' : '하트를 다 썼어요'}</h3>
       <p class="g-stars">${'⭐'.repeat(a.stars)}${'☆'.repeat(3 - a.stars)}</p>
-      <p class="g-tip">모은 코인 <b>${a.coins}</b> · 틀린 문제 <b>${a.wrong}</b></p>
+      <p class="g-tip">모은 코인 <b>${a.coins}</b> · 맞힌 블록 <b>${a.blockOk} / 3</b> · 잃은 하트 <b>${a.wrong}</b></p>
       <button class="btn big go" data-act="r2Start">다시 하기 ↻</button>
       ${a.phase === 'clear' && next ? `<button class="btn big" data-act="r2Next" style="${tone(4)}">다음 코스 ▶</button>` : ''}</div>`;
   }
   box.innerHTML = html;
-  // 문제·결과 카드는 화면 안으로, 달리는 중에는 게임 화면이 보이게 (태블릿에서 스크롤하지 않아도 되도록)
   const target = a.phase === 'run' ? $('advCanvas') : box;
   if (target && a.phase !== 'ready') target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function drawAdv(c) {
   const a = adv, W = G.W, H = G.H, sx = a.sx, k = a.c;
-  const sky = c.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, k.sky[0]); sky.addColorStop(1, k.sky[1]);
-  c.fillStyle = sky; c.fillRect(0, 0, W, H);
+  drawSpace(c, W, H, a.t, sx, k.sky, k.neb);
+  // 먼 풍경: 어둡고 흐린 크레이터 능선 (장애물·코인과 헷갈리지 않도록 그림 없이 윤곽만)
+  c.fillStyle = 'rgba(8,12,38,.6)'; c.beginPath(); c.moveTo(0, G.GROUND);
+  for (let x = 0; x <= W; x += 16) { const wx = x + sx * .45; c.lineTo(x, G.GROUND - 40 - 22 * Math.sin(wx * .011) - 12 * Math.sin(wx * .029 + 1)); }
+  c.lineTo(W, G.GROUND); c.closePath(); c.fill();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.font = `46px ${EMOJI_FONT}`; c.globalAlpha = .85;
-  for (let i = 0; i < 6; i++) c.fillText('☁️', ((i * 230 - sx * .25) % 1380 + 1380) % 1380 - 100, 56 + (i % 3) * 38);
-  c.globalAlpha = 1; c.font = `44px ${EMOJI_FONT}`;
-  for (let i = 0; i < 8; i++) c.fillText(k.deco[i % k.deco.length], ((i * 170 - sx * .5) % 1360 + 1360) % 1360 - 80, G.GROUND - 22);
-  c.fillStyle = k.ground; c.fillRect(0, G.GROUND, W, H - G.GROUND);
-  c.fillStyle = 'rgba(45,50,80,.12)'; c.fillRect(0, G.GROUND, W, 6);
-  for (let i = 0; i < 12; i++) { // 징검돌 무늬
-    const x = ((i * 120 - sx) % 1440 + 1440) % 1440 - 60;
-    c.beginPath(); c.ellipse(x, G.GROUND + 40, 34, 12, 0, 0, 7); c.fillStyle = 'rgba(45,50,80,.1)'; c.fill();
-  }
+  const deck = c.createLinearGradient(0, G.GROUND, 0, H);   // 우주 정거장 바닥: 금속 판 + 네온 가장자리
+  deck.addColorStop(0, '#2c3566'); deck.addColorStop(1, '#141a3d');
+  c.fillStyle = deck; c.fillRect(0, G.GROUND, W, H - G.GROUND);
+  c.fillStyle = '#54e1ff'; c.fillRect(0, G.GROUND, W, 5);
+  c.fillStyle = 'rgba(84,225,255,.18)'; c.fillRect(0, G.GROUND + 5, W, 8);
+  c.strokeStyle = 'rgba(160,190,255,.22)'; c.lineWidth = 2;
+  for (let i = 0; i < 12; i++) { const x = ((i * 120 - sx) % 1440 + 1440) % 1440 - 60; c.beginPath(); c.moveTo(x, G.GROUND + 14); c.lineTo(x, H); c.stroke(); }
   a.objs.forEach(o => {
     const px = o.x - sx;
     if (px < -160 || px > W + 160) return;
-    if (o.type === 'bridge') {
-      if (!o.built) {
-        c.fillStyle = '#5cc4ff'; c.fillRect(px - 75, G.GROUND, 150, H - G.GROUND);
-        c.font = `28px ${EMOJI_FONT}`; c.fillText('🌊', px - 35, G.GROUND + 34); c.fillText('🌊', px + 35, G.GROUND + 34);
-      } else {
-        c.fillStyle = '#b9824a'; c.fillRect(px - 75, G.GROUND - 4, 150, 16);
-        c.fillStyle = 'rgba(0,0,0,.18)'; for (let i = 1; i < 6; i++) c.fillRect(px - 75 + i * 25, G.GROUND - 4, 3, 16);
-      }
+    c.fillStyle = '#fff';   // 이모지는 직전 색의 투명도를 따라가므로 매번 불투명으로 되돌린다
+    if (o.type === 'bridge') {   // 우주 틈 (난이도가 높을수록 넓다)
+      const w = a.gapHalf;
+      c.fillStyle = '#03051a'; c.fillRect(px - w, G.GROUND, w * 2, H - G.GROUND);
+      c.fillStyle = '#54e1ff'; c.fillRect(px - w, G.GROUND, 3, H - G.GROUND); c.fillRect(px + w - 3, G.GROUND, 3, H - G.GROUND);
+      c.fillStyle = '#9fe8ff'; [[-.6, 20], [-.15, 44], [.3, 26], [.6, 50], [-.4, 58]].forEach(([fx, dy]) => c.fillRect(px + fx * w, G.GROUND + dy, 3, 3));
     }
     if (o.type === 'block') {
       const y = G.GROUND - 175;
-      c.fillStyle = o.hit ? '#c9a46a' : '#ffc233'; c.strokeStyle = '#2d3250'; c.lineWidth = 4;
+      c.fillStyle = o.hit ? '#c9a46a' : '#ffc233'; c.strokeStyle = '#141a3d'; c.lineWidth = 4;
       c.beginPath(); c.roundRect(px - 32, y - 32, 64, 64, 12); c.fill(); c.stroke();
-      c.fillStyle = '#2d3250'; c.font = `36px "Jua", ${EMOJI_FONT}`; c.fillText(o.hit ? '✓' : '?', px, y + 2);
+      c.fillStyle = '#141a3d'; c.font = `36px "Jua", ${EMOJI_FONT}`; c.fillText(o.hit ? '✓' : '?', px, y + 2);
     }
-    if (o.type === 'coin' && !o.done) {
+    if (o.type === 'coin') {
       c.font = `34px ${EMOJI_FONT}`;
-      [-44, 0, 44].forEach((d, i) => c.fillText('🪙', px + d, G.GROUND - 46 - Math.abs(Math.sin(a.t * 4 + i)) * 10));
+      [-44, 0, 44].forEach((d, i) => { if (!o.got[i]) c.fillText('🪙', px + d, G.GROUND - 46 - Math.abs(Math.sin(a.t * 4 + i)) * 10); });
     }
-    if (o.type === 'friend') {
-      c.font = `56px ${EMOJI_FONT}`;
-      c.fillText(k.friend, px, G.GROUND - 34 - (o.freed ? Math.abs(Math.sin(a.t * 6)) * 24 : 0));
-      if (!o.freed) { c.strokeStyle = '#2d3250'; c.lineWidth = 4; c.strokeRect(px - 40, G.GROUND - 76, 80, 76); for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(px + i * 24, G.GROUND - 76); c.lineTo(px + i * 24, G.GROUND); c.stroke(); } }
-      else { c.font = `30px ${EMOJI_FONT}`; c.fillText('❤️', px + 36, G.GROUND - 84); }
+    if (o.type === 'rock' && !o.gone) {   // 위험 표시(붉은 빛)가 있는 운석
+      c.save(); c.shadowColor = '#ff4d4d'; c.shadowBlur = 18; c.font = `62px ${EMOJI_FONT}`; c.fillText('☄️', px, G.GROUND - 32); c.restore();
+    }
+    if (o.type === 'boss' && !o.done) {
+      const bx = px + (a.shake > 0 ? Math.sin(a.t * 60) * 7 : 0), by = G.GROUND - 80 + Math.sin(a.t * 2) * 6;
+      c.font = `128px ${EMOJI_FONT}`; c.fillText(a.c.boss, bx, by);
+      const bw = 170, fr = o.q.hp / o.q.max;   // 보스 에너지 바
+      c.fillStyle = '#141a3d'; c.beginPath(); c.roundRect(px - bw / 2 - 3, G.GROUND - 188, bw + 6, 20, 8); c.fill();
+      c.fillStyle = fr > .5 ? '#2fbf95' : fr > .3 ? '#ffb020' : '#ff4d4d'; c.beginPath(); c.roundRect(px - bw / 2, G.GROUND - 185, Math.max(6, bw * fr), 14, 6); c.fill();
     }
     if (o.type === 'flag') { c.font = `64px ${EMOJI_FONT}`; c.fillText('🏁', px, G.GROUND - 40); }
   });
-  const h = a.hero, bob = a.phase === 'run' && !a.waiting && h.y >= G.GROUND ? Math.abs(Math.sin(a.t * 12)) * 6 : 0;
-  c.font = `58px ${EMOJI_FONT}`; c.fillText('🐥', G.HERO_X, h.y - 32 - bob);
-  if (a.waiting && Math.floor(a.t * 3) % 2 === 0) { c.font = `26px "Jua", ${EMOJI_FONT}`; c.fillStyle = '#2d3250'; c.fillText('⬆️ 점프!', G.HERO_X, h.y - 96); }
+  c.fillStyle = '#fff';
+  const h = a.hero, fell = a.phase === 'ask' && a.cur && a.cur.type === 'bridge';
+  const bob = a.phase === 'run' && h.y >= G.GROUND ? Math.abs(Math.sin(a.t * 12)) * 6 : 0;
+  const blink = a.hurt > 0 && Math.floor(a.t * 14) % 2 === 0;
+  if (fell) { c.globalAlpha = .55; drawRobot(c, G.HERO_X, G.GROUND + 52, a.t, true, false); c.globalAlpha = 1; }
+  else { if (blink) c.globalAlpha = .35; drawRobot(c, G.HERO_X, h.y - bob, a.t, h.y < G.GROUND, a.phase === 'run'); c.globalAlpha = 1; }
+  if (a.hint && Math.floor(a.t * 4) % 2 === 0) { c.font = `30px ${EMOJI_FONT}`; c.fillText('⬆️', G.HERO_X, h.y - 140); }   // 점프하거나 쏴요
+  a.missiles.forEach(m => {
+    c.save(); c.translate(m.x, m.y); c.rotate(Math.atan2(m.vy, m.vx) + Math.PI / 4);
+    c.font = `36px ${EMOJI_FONT}`; c.fillText('🚀', 0, 0); c.restore();
+  });
   c.font = `28px ${EMOJI_FONT}`;
   a.fx.forEach(p => { c.globalAlpha = Math.max(0, p.life); c.fillText(p.s, p.x, p.y); });
   c.globalAlpha = 1;
@@ -2060,14 +2209,81 @@ function r2Click(b) {
   if (act === 'r2Start') { adv = newAdv(advCourse); adv.phase = 'run'; renderAdvUI(); }
   if (act === 'r2Next') { advCourse = ADV_COURSES[ADV_COURSES.findIndex(c => c.key === advCourse) + 1].key; adv = null; renderView(); }
   if (act === 'r2Jump') advJump();
+  if (act === 'r2Fire') advFire();
   if (act === 'r2Ans') advAnswer(Number(d.i));
   if (act === 'r2Chip') advChip(Number(d.i));
-  if (act === 'r2Replay' && adv && adv.cur) speak(adv.cur.q.it);
+  if (act === 'r2Replay' && adv && adv.cur) speak(advIt(adv.cur));
+  if (act === 'r2Level') { state.adv.level = Number(d.k); saveState(); adv = null; renderView(); }
 }
+/* ---------- 🤖 로봇 · 🌌 우주: 두 게임이 함께 쓰는 그리기 (이미지 없이 코드로 그린다) ---------- */
+// 로봇은 발바닥 가운데가 (x, y). 달릴 때 팔다리가 흔들리고, 공중에서는 발밑 부스터가 켜진다
+function drawRobot(c, x, y, t, air, run) {
+  const sw = run && !air ? Math.sin(t * 12) : 0;
+  c.save(); c.translate(x, y); c.scale(.84, .84);
+  c.lineJoin = 'round'; c.lineWidth = 3.5; c.strokeStyle = '#141a3d';
+  const box = (px, py, w, h, r, fill) => { c.fillStyle = fill; c.beginPath(); c.roundRect(px, py, w, h, r); c.fill(); c.stroke(); };
+  if (air) {
+    const f = 18 + Math.random() * 14;
+    c.fillStyle = '#ff9f1c'; c.beginPath(); c.moveTo(-11, -2); c.lineTo(0, f); c.lineTo(11, -2); c.fill();
+    c.fillStyle = '#fff3b0'; c.beginPath(); c.moveTo(-5, -2); c.lineTo(0, f * .6); c.lineTo(5, -2); c.fill();
+  }
+  box(-16 + sw * 5, -32, 13, 32, 4, '#2f5be0'); box(3 - sw * 5, -32, 13, 32, 4, '#2f5be0');     // 다리
+  box(-19 + sw * 5, -9, 18, 9, 3, '#eef2ff'); box(1 - sw * 5, -9, 18, 9, 3, '#eef2ff');         // 발
+  box(-34, -68 - sw * 4, 13, 28, 6, '#eef2ff'); box(21, -68 + sw * 4, 13, 28, 6, '#eef2ff');     // 팔
+  box(-35, -44 - sw * 4, 15, 11, 4, '#2f5be0'); box(20, -44 + sw * 4, 15, 11, 4, '#2f5be0');     // 손
+  box(-16, -40, 32, 10, 3, '#e5383b');                                                           // 허리
+  box(-22, -76, 44, 38, 9, '#eef2ff');                                                           // 몸통
+  box(-13, -70, 26, 15, 4, '#2f5be0');                                                           // 가슴 장갑
+  c.fillStyle = '#e5383b'; c.fillRect(-9, -52, 7, 4); c.fillRect(2, -52, 7, 4);                  // 가슴 환기구
+  c.fillStyle = '#ffd43b'; c.beginPath(); c.arc(0, -62, 4.5, 0, 7); c.fill();                    // 에너지 코어
+  c.fillStyle = '#e5383b'; c.beginPath(); c.arc(-27, -74, 9, 0, 7); c.fill(); c.stroke();        // 어깨 장갑
+  c.beginPath(); c.arc(27, -74, 9, 0, 7); c.fill(); c.stroke();
+  box(-16, -106, 32, 30, 9, '#eef2ff');                                                          // 머리
+  c.save(); c.shadowColor = '#22d3ee'; c.shadowBlur = 14;
+  box(-12, -96, 24, 10, 4, '#22d3ee'); c.restore();                                              // 바이저(눈)
+  c.fillStyle = '#fff'; c.fillRect(-8, -93, 5, 3); c.fillRect(3, -93, 5, 3);
+  c.fillStyle = '#ffd43b';                                                                       // V자 안테나
+  c.beginPath(); c.moveTo(-3, -106); c.lineTo(-19, -124); c.lineTo(-8, -106); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(3, -106); c.lineTo(19, -124); c.lineTo(8, -106); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#e5383b'; c.beginPath(); c.arc(0, -108, 3.5, 0, 7); c.fill();
+  c.restore();
+}
+
+// 우주 배경: 그라데이션 + 성운 + 3겹 별(깜빡임·시차) + 행성 + 가끔 지나가는 별똥별. sx는 가로 스크롤 거리
+function drawSpace(c, W, H, t, sx, sky, neb) {
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  [[.25, .3, 320], [.75, .6, 380]].forEach(([fx, fy, r], i) => {
+    const span = W * 1.6, x = ((fx * span - sx * (.05 + i * .04)) % span + span) % span - W * .3;
+    const rg = c.createRadialGradient(x, H * fy, 0, x, H * fy, r);
+    rg.addColorStop(0, neb[i % neb.length] + '66'); rg.addColorStop(1, neb[i % neb.length] + '00');
+    c.fillStyle = rg; c.fillRect(0, 0, W, H);
+  });
+  for (let L = 0; L < 3; L++) for (let i = 0; i < 36; i++) {
+    const rx = (i * 9301 + L * 49297 + 233) % 1000 / 1000, ry = (i * 4417 + L * 7213 + 91) % 1000 / 1000;
+    const sz = [1.3, 2, 3][L];
+    c.globalAlpha = .5 + .5 * Math.sin(t * (1.4 + L * .8) + i * 1.7);
+    c.fillStyle = L === 2 && i % 5 === 0 ? '#ffe9a8' : '#fff';
+    c.fillRect(((rx * W - sx * [.08, .2, .42][L]) % W + W) % W, ry * (H - 60), sz, sz);
+  }
+  c.globalAlpha = 1;
+  [[.8, 92, 46, '#ffd9a0', '#c4733a', 1], [.28, 150, 22, '#b9c8ff', '#4c5fb8', 0]].forEach(([fx, y, r, c1, c2, ring]) => {
+    const span = W * 1.5, x = ((fx * span - sx * .06) % span + span) % span - W * .25;
+    const pg = c.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+    pg.addColorStop(0, c1); pg.addColorStop(1, c2);
+    c.fillStyle = pg; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    if (ring) { c.strokeStyle = 'rgba(255,230,190,.8)'; c.lineWidth = 5; c.beginPath(); c.ellipse(x, y, r * 1.7, r * .42, -.35, 0, 7); c.stroke(); }
+  });
+  const ph = (t % 7) / 1.1;
+  if (ph < 1) { c.strokeStyle = 'rgba(255,255,255,' + (1 - ph) + ')'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(W * (.9 - ph * .6), 20 + ph * 110); c.lineTo(W * (.9 - ph * .6) + 60, 20 + ph * 110 - 24); c.stroke(); }
+}
+
 document.addEventListener('pointerdown', e => { if (e.target.id === 'advCanvas') advJump(); });
 document.addEventListener('keydown', e => {
   if (!adv || state.ui.view !== 'adv' || !$('dialog').hidden || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
   if (e.code === 'Space' || e.key === 'ArrowUp') { e.preventDefault(); advJump(); }
+  if (e.code === 'KeyX' || e.code === 'KeyF') advFire();
   if (adv.phase === 'ask' && /^[1-3]$/.test(e.key)) advAnswer(Number(e.key) - 1);
 });
 </script>
@@ -2527,6 +2743,14 @@ td:first-child { font-family: var(--display); font-size: 1.05rem; }
 .bk-mode { display: flex; justify-content: center; margin-bottom: 12px; }
 .bk-ctl { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 8px; }
 .adv-panel { margin-top: 14px; }
+.adv-lv-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+.boss-bar { margin: 0 0 6px; font: 1.1rem var(--display); }
+.boss-bar b { letter-spacing: 2px; }
+.r2-sent { font: clamp(1.5rem, 5.5vw, 2.4rem) var(--display); margin: 6px 0 10px; line-height: 1.5; }
+.r2-choice.long { font-size: clamp(1.05rem, 3.4vw, 1.5rem); padding: 10px 16px; min-width: 0; }
+.btn.fire { background: var(--s1); border-color: var(--s1); box-shadow: 0 5px 0 #d65e4f; font-size: 1.3rem; padding: 12px 24px; }
+.btn.fire small { font: 700 .9rem var(--font); }
+.btn.fire[disabled] { background: var(--line); border-color: var(--line); box-shadow: 0 5px 0 #cdd8e8; color: var(--muted); }
 .adv-card { background: #fff; border: 3px solid var(--line); border-radius: 24px; padding: 16px 18px; text-align: center; box-shadow: 0 5px 0 var(--line); min-height: 120px; }
 .adv-card h3 { margin: 4px 0 6px; font: 1.5rem var(--display); }
 .adv-card .g-how { max-width: 560px; margin: 8px auto 14px; }
